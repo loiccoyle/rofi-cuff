@@ -24,11 +24,11 @@ MENU_CMD=(rofi -dmenu -show -p "Select" -i)
 OPEN_URL="${BROWSER:-${OPENER:-xdg-open}}"
 OPEN_TORRENT="${OPENER:-xdg-open}"
 ACTIONS=()
-type "$OPEN_TORRENT" > /dev/null && ACTIONS+=("download")
-type "$OPEN_URL" > /dev/null && ACTIONS+=("open")
-type webtorrent > /dev/null && ACTIONS+=("stream")
+type "$OPEN_TORRENT" > /dev/null 2>&1 && ACTIONS+=("download")
+type "$OPEN_URL" > /dev/null 2>&1 && ACTIONS+=("open")
+type webtorrent > /dev/null 2>&1 && ACTIONS+=("stream")
 
-[ -z "${ACTIONS[*]}" ] && err_msg_exit "No actions."
+[ "${#ACTIONS[@]}" = 0 ] && err_msg_exit "No actions."
 
 # Action definitions
 download() {
@@ -151,7 +151,7 @@ wait_jackett() {
 }
 
 
-# Handle the starting and stopping our selves as it is more responsive to do it the background now than later
+# Handle the starting and stopping ourselves as it is more responsive to do it the background now than later
 CUFF_ARGS=()
 START=""
 while getopts ":hsk" opt; do
