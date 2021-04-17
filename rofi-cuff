@@ -136,7 +136,7 @@ check_jackett() {
 
 stop_jackett() {
     # Stop the jackett service if it is running.
-    check_jackett && sudo systemctl stop jackett.service
+    check_jackett && sudo systemctl stop jackett.service > /dev/null
 }
 
 wait_jackett() {
@@ -167,12 +167,12 @@ while getopts ":hsk" opt; do
                 check_jackett || sudo systemctl start jackett.service > /dev/null &
                 START=1
             else
-                printf "Not jackett service file found." >&2
+                err_msg_exit "Jackett service file not found."
             fi
             ;;
         "k" )
             # Add a trap on exit to kill jackett service
-            { has_jackett && trap stop_jackett EXIT; } || printf "Not jackett service file found." >&2
+            { has_jackett && trap stop_jackett EXIT; } || err_msg_exit "Jackett service file not found."
             ;;
         * )
             CUFF_ARGS+=(-$OPTARG)
@@ -181,7 +181,7 @@ done
 shift $((OPTIND-1))
 
 # Pipe a cuff search json output straight to rofi-jackett
-# e.g. $ cuff search big buck bunny | rofi-jackett
+# e.g. $ cuff search big buck bunny | rofi-jackett -
 if [ "$1" = "-" ]; then
     STDIN=1
     search
