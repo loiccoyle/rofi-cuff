@@ -123,27 +123,65 @@ search() {
     done
 }
 
+has_jackett(){
+    # Check to see if the jackett service file is installed.
+    systemctl list-unit-files jackett.service > /dev/null
+}
+
+check_jackett() {
+    # Check if the Jackett service is active.
+    systemctl is-active jackett.service > /dev/null
+}
+
+stop_jackett() {
+    # Stop the jackett service if it is running.
+    check_jackett && sudo systemctl stop jackett.service
+}
+
+wait_jackett() {
+    # Wait until Jackett is responsive. Max of 5s.
+    for((i=0; i < 10; i++)); do
+        { cuff config > /dev/null 2>&1 && break; } || sleep 0.5
+    done
+}
+
+
+# Handle the starting and stopping our selves as it is more responsive to do it the background now than later
+CUFF_ARGS=()
+while getopts ":hsk" opt; do
+    case $opt in
+        "h" )
+            # Stop execution early if help msg is requested.
+            # Just show the help msg for the main cuff cmd.
+            printf 'Use "-" to pipe read the json Jackett response from stdin.\nOtherwise, %s passes any provided options to the main cuff command:\n\n' "$(basename "$0")"
+            cuff -h | head -n12
+            exit 0
+            ;;
+        "s" )
+            # Start the jackett service in the background
+            if has_jackett; then
+                check_jackett || sudo systemctl start jackett.service > /dev/null &
+            else
+                printf "Not jackett service file found." >&2
+            fi
+            ;;
+        "k" )
+            # Add a trap on exit to kill jackett service
+            { has_jackett && trap stop_jackett EXIT; } || printf "Not jackett service file found." >&2
+            ;;
+        * )
+            CUFF_ARGS+=(-$OPTARG)
+    esac
+done
+shift $((OPTIND-1))
+
 # Pipe a cuff search json output straight to rofi-jackett
 # e.g. $ cuff search big buck bunny | rofi-jackett
 if [ "$1" = "-" ]; then
     STDIN=1
     search
     exit
-else
-    # Pass the options to cuff
-    # e.g. rofi-cuff -v -v -p password
-    CUFF_ARGS=($*)
 fi
-
-# Stop execution early if help msg is requested.
-while getopts ":h" opt; do
-    if [ "${opt}" = "h" ]; then
-        # Just show the help msg for the main cuff cmd.
-        printf 'Use "-" to pipe read the json Jackett response from stdin.\nOtherwise, %s passes any provided options to the main cuff command:\n\n' "$(basename "$0")"
-        cuff -h | head -n12
-        exit 0
-    fi
-done
 
 # Main loop
 DONE=""
@@ -162,12 +200,14 @@ while [ -z "$DONE" ]; do
     fi
     case "$SELECTION" in
         "Restrict to trackers" )
+            wait_jackett
             trackers
             ;;
         "Restrict to categories" )
             categories
             ;;
         "Search" )
+            wait_jackett
             search
             DONE=1
             ;;
