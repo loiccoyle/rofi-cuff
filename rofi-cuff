@@ -33,25 +33,25 @@ type webtorrent > /dev/null 2>&1 && ACTIONS+=("stream")
 # Action definitions
 download() {
     # Download the torrent.
-    $OPEN_TORRENT "$(printf "%s" "$1" | jq -r '.MagnetUri//.Link')"
+    $OPEN_TORRENT "$(printf "%s" "$1" | jq -r ".MagnetUri//.Link")" &
 }
 
 open() {
     # Open the torrent's web page.
     local url
-    url="$(printf "%s" "$1" | jq -r '.Guid//.Details')"
+    url="$(printf "%s" "$1" | jq -r ".Guid//.Details")"
     if [ "$url" = "null" ]; then
-        err_msg_exit "Could not get link."
+        printf "Could not get link." >&2
     else
-        $OPEN_URL "$url"
+        $OPEN_URL "$url" &
     fi
 }
 
 stream() {
     # Stream the torrent with webtorrent.
     local magnet
-    magnet="$(printf "%s" "$1" | jq -r '.MagnetUri//.Link')"
-    $TERMINAL -e "webtorrent \'$magnet\' --port 9827 --mpv --not-on-top"
+    magnet="$(printf "%s" "$1" | jq -r ".MagnetUri//.Link")"
+    $TERMINAL --hold -e webtorrent "$magnet" --port 9827 --mpv --not-on-top &
 }
 
 # Defaults
