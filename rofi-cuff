@@ -77,7 +77,7 @@ search() {
     else
         # Prompt for search
         local query="$(${INPUT_CMD[@]})"
-        results="$(cuff $CUFF_ARGS search -s "Peers" "$TRACKER_ARGS" "$CATEGORY_ARGS" "$query")"
+        results="$(cuff "$CUFF_ARGS" search -s "Peers" "$TRACKER_ARGS" "$CATEGORY_ARGS" "$query")" || exit
     fi
 
     local IFS=$'\n'
@@ -116,7 +116,7 @@ if [ "$1" = "-" ]; then
     exit
 else
     # Pass the options to cuff
-    # e.g. rofi-cuff -p password
+    # e.g. rofi-cuff -v -v -p password
     CUFF_ARGS="$*"
 fi
 
@@ -124,7 +124,7 @@ fi
 while getopts ":h" opt; do
     if [ "${opt}" = "h" ]; then
         # Just show the help msg for the main cuff cmd.
-        printf '%s passes any provided to the main cuff command.\n' "$(basename "$0")"
+        printf '%s passes any provided to the main cuff command.\n\n' "$(basename "$0")"
         cuff -h | head -n12
         exit 0
     fi
