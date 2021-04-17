@@ -89,11 +89,12 @@ search() {
         # Prompt for search
         local query
         query="$("${INPUT_CMD[@]}")"
-        results="$(cuff "${CUFF_ARGS[@]}" search -s "Peers" "${TRACKER_ARGS[@]}" "${CATEGORY_ARGS[@]}" "$query")"
+        results="$(cuff "${CUFF_ARGS[@]}" search -s "Peers" "${TRACKER_ARGS[@]}" "${CATEGORY_ARGS[@]}" "$query")" || exit
     fi
 
     local IFS=$'\n'
     declare -a results_table
+    local selected_indices
     results_table=($(\
         printf "%s" "$results" | \
         jq -r '.[] | "\(.Title[:60])\t\(.TrackerId)\t\(.Size)\t🔽\(.Seeders)\t🔼\(.Peers)\t\(.PublishDate[:10])"' | \
@@ -101,7 +102,7 @@ search() {
         column --table --separator=$'\t' \
         ))
 
-    selected_indices="$(printf "%s\n" "${results_table[@]}" | "${MENU_CMD[@]}" -format 'i' -multi-select)" || exit
+    selected_indices="$(printf "%s\n" "${results_table[@]}" | "${MENU_CMD[@]}" -format 'i' -multi-select -mesg "Shift+Enter: Multiple select")" || exit
 
     # Iterate over selected torrents and run the selected action.
     for index in $selected_indices; do
@@ -139,15 +140,18 @@ stop_jackett() {
 }
 
 wait_jackett() {
-    # Wait until Jackett is responsive. Max of 5s.
-    for((i=0; i < 10; i++)); do
-        { cuff config > /dev/null 2>&1 && break; } || sleep 0.5
-    done
+    # If we started the server, wait until Jackett is responsive. Max of 5s.
+    if [ -n "$START" ]; then
+        for((i=0; i < 10; i++)); do
+            { cuff "${CUFF_ARGS[@]}" config > /dev/null 2>&1 && break; } || sleep 0.5
+        done
+    fi
 }
 
 
 # Handle the starting and stopping our selves as it is more responsive to do it the background now than later
 CUFF_ARGS=()
+START=""
 while getopts ":hsk" opt; do
     case $opt in
         "h" )
@@ -161,6 +165,7 @@ while getopts ":hsk" opt; do
             # Start the jackett service in the background
             if has_jackett; then
                 check_jackett || sudo systemctl start jackett.service > /dev/null &
+                START=1
             else
                 printf "Not jackett service file found." >&2
             fi
