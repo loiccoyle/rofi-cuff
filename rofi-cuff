@@ -36,13 +36,19 @@ download() {
 
 open() {
     # Open the torrent's web page.
-    local url="$(printf "%s" "$1" | jq -r '.Guid//.Details')"
-    [ "$url" = "null" ] && err_msg_exit "Could not get link." || $OPEN_URL "$url"
+    local url
+    url="$(printf "%s" "$1" | jq -r '.Guid//.Details')"
+    if [ "$url" = "null" ]; then
+        err_msg_exit "Could not get link."
+    else
+        $OPEN_URL "$url"
+    fi
 }
 
 stream() {
     # Stream the torrent with webtorrent.
-    local magnet="$(printf "%s" "$1" | jq -r '.MagnetUri//.Link')"
+    local magnet
+    magnet="$(printf "%s" "$1" | jq -r '.MagnetUri//.Link')"
     $TERMINAL -e "webtorrent \'$magnet\' --port 9827 --mpv --not-on-top"
 }
 
@@ -50,22 +56,27 @@ stream() {
 TRACKER_ARGS=""
 CATEGORY_ARGS=""
 STDIN=""
-CUFF_ARGS=""
+CUFF_ARGS=()
 
 SUBMENU=("Search" "Restrict to trackers" "Restrict to categories")
 # Submenus
 trackers() {
     # Restrict search to provided trackers.
     local IFS=$'\n'
-    local trackers=($(cuff indexers | ${MENU_CMD[@]} -multi-select -mesg 'ESC to clear'))
-    [ -n "$trackers" ] && TRACKER_ARGS="$(printf -- "-t %s " ${trackers[@]})" || TRACKER_ARGS=""
+    local trackers
+    local indexers
+    indexers="$(cuff "${CUFF_ARGS[@]}" indexers)" || exit
+    trackers=($(printf "%s" "$indexers" | "${MENU_CMD[@]}" -multi-select -mesg 'ESC to clear'))
+
+    [ "${#trackers[@]}" -gt 0 ] && TRACKER_ARGS=($(printf -- "-t %s " ${trackers[@]})) || TRACKER_ARGS=()
 }
 
 categories() {
     # Restrict search to provided categories.
     local IFS=$'\n'
-    local categories=($(cuff categories | ${MENU_CMD[@]} -multi-select -mesg 'ESC to clear'))
-    [ -n "$categories" ] && CATEGORY_ARGS="$(printf -- "-c %s " ${categories[@]})" || CATEGORY_ARGS=""
+    local categories
+    categories=($(cuff categories | "${MENU_CMD[@]}" -multi-select -mesg 'ESC to clear'))
+    [ "${#categories[@]}" -gt 0 ] && CATEGORY_ARGS=($(printf -- "-c %s " ${categories[@]})) || CATEGORY_ARGS=()
 }
 
 search() {
@@ -76,25 +87,29 @@ search() {
         results="$(cat)"
     else
         # Prompt for search
-        local query="$(${INPUT_CMD[@]})"
-        results="$(cuff "$CUFF_ARGS" search -s "Peers" "$TRACKER_ARGS" "$CATEGORY_ARGS" "$query")" || exit
+        local query
+        query="$("${INPUT_CMD[@]}")"
+        results="$(cuff "${CUFF_ARGS[@]}" search -s "Peers" "${TRACKER_ARGS[@]}" "${CATEGORY_ARGS[@]}" "$query")"
     fi
 
     local IFS=$'\n'
-    declare -a results_table=($(\
+    declare -a results_table
+    results_table=($(\
         printf "%s" "$results" | \
         jq -r '.[] | "\(.Title[:60])\t\(.TrackerId)\t\(.Size)\t🔽\(.Seeders)\t🔼\(.Peers)\t\(.PublishDate[:10])"' | \
         numfmt --field 3 --to=iec -d$'\t' --invalid=ignore | \
         column --table --separator=$'\t' \
         ))
 
-    selected_indices="$(printf '%s\n' "${results_table[@]}" | ${MENU_CMD[@]} -format 'i' -multi-select)" || exit $?
+    selected_indices="$(printf "%s\n" "${results_table[@]}" | "${MENU_CMD[@]}" -format 'i' -multi-select)" || exit $?
 
     # Iterate over selected torrents and run the selected action.
     for index in $selected_indices; do
-        local selected_torrent="$(printf "%s" "$results" | jq ".[$index]")"
-        local selected_torrent_string="${results_table[$index]}"
-        case "$(printf "%s\n" ${ACTIONS[@]} | ${MENU_CMD[@]} -no-custom -l ${#ACTIONS[@]} -mesg "$selected_torrent_string")" in
+        local selected_torrent
+        local selected_torrent_string
+        selected_torrent="$(printf "%s" "$results" | jq ".[$index]")"
+        selected_torrent_string="${results_table[$index]}"
+        case "$(printf "%s\n" "${ACTIONS[@]}" | "${MENU_CMD[@]}" -no-custom -l ${#ACTIONS[@]} -mesg "$selected_torrent_string")" in
             "download" )
                 download "$selected_torrent"
                 ;;
@@ -117,14 +132,14 @@ if [ "$1" = "-" ]; then
 else
     # Pass the options to cuff
     # e.g. rofi-cuff -v -v -p password
-    CUFF_ARGS="$*"
+    CUFF_ARGS=($*)
 fi
 
 # Stop execution early if help msg is requested.
 while getopts ":h" opt; do
     if [ "${opt}" = "h" ]; then
         # Just show the help msg for the main cuff cmd.
-        printf '%s passes any provided to the main cuff command.\n\n' "$(basename "$0")"
+        printf 'Use "-" to pipe read the json Jackett response from stdin.\nOtherwise, %s passes any provided options to the main cuff command:\n\n' "$(basename "$0")"
         cuff -h | head -n12
         exit 0
     fi
@@ -134,15 +149,15 @@ done
 DONE=""
 while [ -z "$DONE" ]; do
     # Add a msg to the main menu to indicate the selected trackers/categories
-    if [ -n "$TRACKER_ARGS" ] || [ -n "$CATEGORY_ARGS" ]; then
+    if [ "${#TRACKER_ARGS[@]}" -gt 0 ] || [ "${#CATEGORY_ARGS[@]}" -gt 0 ]; then
         SELECTION="$(\
             printf "%s\n" "${SUBMENU[@]}" | \
-            ${MENU_CMD[@]} -no-custom -l ${#SUBMENU[@]} -mesg "Cuff search args: ${TRACKER_ARGS}${CATEGORY_ARGS}" \
+            "${MENU_CMD[@]}" -no-custom -l ${#SUBMENU[@]} -mesg "Cuff search args: ${TRACKER_ARGS[*]}${CATEGORY_ARGS[*]}" \
             )" || exit $?
     else
         SELECTION="$(\
             printf "%s\n" "${SUBMENU[@]}" | \
-            ${MENU_CMD[@]} -no-custom -l ${#SUBMENU[@]} \
+            "${MENU_CMD[@]}" -no-custom -l ${#SUBMENU[@]} \
             )" || exit $?
     fi
     case "$SELECTION" in
