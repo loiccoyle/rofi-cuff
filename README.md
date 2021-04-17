@@ -1,15 +1,17 @@
 # rofi-cuff
 <a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 
-Rofi wrapper for [cuff](https://github.com/loiccoyle/cuff). Use the [Jackett](https://github.com/jackett/jackett) search API to find torrents.
+Rofi wrapper for [`cuff`](https://github.com/loiccoyle/cuff). Use the [`Jackett`](https://github.com/jackett/jackett) search API to find torrents.
 
 # Installation
 
 ### Dependencies
 
-* [rofi](https://github.com/davatorium/rofi)
-* [cuff](https://github.com/loiccoyle/cuff)
-* [jq](https://github.com/stedolan/jq)
+* [`rofi`](https://github.com/davatorium/rofi)
+* [`cuff`](https://github.com/loiccoyle/cuff)
+* [`jq`](https://github.com/stedolan/jq)
+
+Of course you'll also need access to a `Jackett` server.
 
 ### Manual
 
