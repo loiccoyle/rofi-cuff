@@ -19,6 +19,8 @@ INPUT_CMD=(rofi -dmenu -show -p "Search" -l 0 -i)
 MENU_CMD=(rofi -dmenu -show -p "Select" -i)
 
 # Figure out which actions are available
+# Note: please feel free to open a PR to add common use cases.
+# https://github.com/loiccoyle/rofi-cuff
 OPEN_URL="${BROWSER:-${OPENER:-xdg-open}}"
 OPEN_TORRENT="${OPENER:-xdg-open}"
 ACTIONS=()
@@ -155,9 +157,13 @@ START=""
 while getopts ":hsk" opt; do
     case $opt in
         "h" )
+            CMD_NAME="$(basename "$0")"
             # Stop execution early if help msg is requested.
             # Just show the help msg for the main cuff cmd.
-            printf 'Use "-" to pipe read the json Jackett response from stdin.\nOtherwise, %s passes any provided options to the main cuff command:\n\n' "$(basename "$0")"
+            printf "\
+Use \"-\" to read the json Jackett response from stdin e.g.:\n\n\
+$ cuff search big buck bunny | %s -\n\n\
+Otherwise, %s passes any provided options to the main cuff command:\n\n" "$CMD_NAME" "$CMD_NAME"
             cuff -h | head -n12
             exit 0
             ;;
