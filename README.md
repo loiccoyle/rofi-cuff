@@ -3,6 +3,8 @@
 
 Rofi wrapper for [`cuff`](https://github.com/loiccoyle/cuff). Use the [`Jackett`](https://github.com/jackett/jackett) search API to find torrents.
 
+![rofi-cuff](https://i.imgur.com/Fb2wh45.png)
+
 [See it in action](https://imgur.com/7roVMqQ)
 
 # Installation
