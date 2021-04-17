@@ -1,5 +1,6 @@
 # rofi-cuff
 <a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+<a href="https://aur.archlinux.org/packages/rofi-cuff-git/"><img src="https://img.shields.io/aur/version/rofi-cuff-git"></a>
 
 [`rofi`](https://github.com/davatorium/rofi) wrapper for [`cuff`](https://github.com/loiccoyle/cuff). Use the [`Jackett`](https://github.com/jackett/jackett) search API to find torrents.
 
@@ -27,6 +28,13 @@ You'll need to git clone this repository and place the script somewhere in your 
 git clone https://github.com/loiccoyle/rofi-cuff
 cd rofi-cuff
 cp rofi-cuff /somewhere/in/your/PATH/
+```
+
+### Arch linux
+
+Using your prefered AUR helper:
+```
+paru -S rofi-cuff-git
 ```
 
 # Usage
