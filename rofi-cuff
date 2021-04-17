@@ -12,6 +12,7 @@ err_msg_exit() {
 # Check dependencies
 type cuff > /dev/null || err_msg_exit "'cuff' not found."
 type jq > /dev/null || err_msg_exit "'jq' not found."
+type rofi > /dev/null || err_msg_exit "'rofi' not found."
 
 # User prompt commands
 INPUT_CMD=(rofi -dmenu -show -p "Search" -l 0 -i)
@@ -49,6 +50,7 @@ stream() {
 TRACKER_ARGS=""
 CATEGORY_ARGS=""
 STDIN=""
+CUFF_ARGS=""
 
 SUBMENU=("Search" "Restrict to trackers" "Restrict to categories")
 # Submenus
@@ -75,7 +77,7 @@ search() {
     else
         # Prompt for search
         local query="$(${INPUT_CMD[@]})"
-        results="$(cuff -s -k search -s "Peers" "$TRACKER_ARGS" "$CATEGORY_ARGS" "$query")"
+        results="$(cuff $CUFF_ARGS search -s "Peers" "$TRACKER_ARGS" "$CATEGORY_ARGS" "$query")"
     fi
 
     local IFS=$'\n'
@@ -112,7 +114,21 @@ if [ "$1" = "-" ]; then
     STDIN=1
     search
     exit
+else
+    # Pass the options to cuff
+    # e.g. rofi-cuff -p password
+    CUFF_ARGS="$*"
 fi
+
+# Stop execution early if help msg is requested.
+while getopts ":h" opt; do
+    if [ "${opt}" = "h" ]; then
+        # Just show the help msg for the main cuff cmd.
+        printf '%s passes any provided to the main cuff command.\n' "$(basename "$0")"
+        cuff -h | head -n12
+        exit 0
+    fi
+done
 
 # Main loop
 DONE=""
