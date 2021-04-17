@@ -53,8 +53,8 @@ stream() {
 }
 
 # Defaults
-TRACKER_ARGS=""
-CATEGORY_ARGS=""
+TRACKER_ARGS=()
+CATEGORY_ARGS=()
 STDIN=""
 CUFF_ARGS=()
 
@@ -101,7 +101,7 @@ search() {
         column --table --separator=$'\t' \
         ))
 
-    selected_indices="$(printf "%s\n" "${results_table[@]}" | "${MENU_CMD[@]}" -format 'i' -multi-select)" || exit $?
+    selected_indices="$(printf "%s\n" "${results_table[@]}" | "${MENU_CMD[@]}" -format 'i' -multi-select)" || exit
 
     # Iterate over selected torrents and run the selected action.
     for index in $selected_indices; do
