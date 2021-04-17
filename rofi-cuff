@@ -193,16 +193,16 @@ DONE=""
 while [ -z "$DONE" ]; do
     # Add a msg to the main menu to indicate the selected trackers/categories
     if [ "${#TRACKER_ARGS[@]}" -gt 0 ] || [ "${#CATEGORY_ARGS[@]}" -gt 0 ]; then
-        SELECTION="$(\
-            printf "%s\n" "${SUBMENU[@]}" | \
-            "${MENU_CMD[@]}" -no-custom -l ${#SUBMENU[@]} -mesg "Cuff search args: ${TRACKER_ARGS[*]}${CATEGORY_ARGS[*]}" \
-            )" || exit $?
+        MESG=(-mesg "Cuff search args: ${TRACKER_ARGS[*]}${CATEGORY_ARGS[*]}")
     else
-        SELECTION="$(\
-            printf "%s\n" "${SUBMENU[@]}" | \
-            "${MENU_CMD[@]}" -no-custom -l ${#SUBMENU[@]} \
-            )" || exit $?
+        MESG=()
     fi
+
+    SELECTION="$(\
+        printf "%s\n" "${SUBMENU[@]}" | \
+        "${MENU_CMD[@]}" -no-custom -l ${#SUBMENU[@]} "${MESG[@]}"
+        )" || exit $?
+
     case "$SELECTION" in
         "Restrict to trackers" )
             wait_jackett
