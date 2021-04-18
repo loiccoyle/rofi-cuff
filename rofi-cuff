@@ -50,8 +50,22 @@ open() {
 stream() {
     # Stream the torrent with webtorrent.
     local magnet
-    magnet="$(printf "%s" "$1" | jq -r ".MagnetUri//.Link")"
-    $TERMINAL --hold -e webtorrent "$magnet" --port 9827 --mpv --not-on-top &
+    magnet="$(printf "%s" "$1" | jq -r ".MagnetUri")"
+    # if there is no magnet link get the magnet link from the link field
+    if [ "$magnet" = "null" ]; then
+        local link
+        link="$(printf "%s" "$1" | jq -r ".Link")"
+        [ "$link" = "null" ] && printf "Could not get magnet link." >&2 && return 1
+        magnet="$(curl "$link" -si | grep "Location")"
+        magnet="${magnet##Location: }"
+    fi
+    # Figure out which player is available
+    local players=(mpv mplayer vlc)
+    local webtorrent_arg=""
+    for player in $players; do
+        type "$player" > /dev/null && webtorrent_arg="--$player" && break
+    done
+    $TERMINAL --hold -e webtorrent "$magnet" "$webtorrent_arg" &
 }
 
 # Defaults
@@ -90,7 +104,7 @@ search() {
     else
         # Prompt for search
         local query
-        query="$("${INPUT_CMD[@]}")"
+        query="$("${INPUT_CMD[@]}")" || exit
         results="$(cuff "${CUFF_ARGS[@]}" search -s "Peers" "${TRACKER_ARGS[@]}" "${CATEGORY_ARGS[@]}" "$query")" || exit
     fi
 
