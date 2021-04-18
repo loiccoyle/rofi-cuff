@@ -33,7 +33,16 @@ type webtorrent > /dev/null 2>&1 && ACTIONS+=("stream")
 # Action definitions
 download() {
     # Download the torrent.
-    $OPEN_TORRENT "$(printf "%s" "$1" | jq -r ".MagnetUri//.Link")" &
+    local magnet
+    magnet="$(printf "%s" "$1" | jq -r ".MagnetUri")"
+    # if there is no magnet link get the magnet link from the link field
+    if [ "$magnet" = "null" ]; then
+        local link
+        link="$(printf "%s" "$1" | jq -r ".Link")"
+        [ "$link" = "null" ] && printf "Could not get magnet link." >&2 && return 1
+        magnet="$(get_magnet_from_link "$link")"
+    fi
+    "$OPEN_TORRENT" "$magnet" &
 }
 
 open() {
@@ -43,7 +52,7 @@ open() {
     if [ "$url" = "null" ]; then
         printf "Could not get link." >&2
     else
-        $OPEN_URL "$url" &
+        "$OPEN_URL" "$url" &
     fi
 }
 
@@ -56,16 +65,24 @@ stream() {
         local link
         link="$(printf "%s" "$1" | jq -r ".Link")"
         [ "$link" = "null" ] && printf "Could not get magnet link." >&2 && return 1
-        magnet="$(curl "$link" -si | grep "Location")"
-        magnet="${magnet##Location: }"
+        magnet="$(get_magnet_from_link "$link")"
     fi
     # Figure out which player is available
     local players=(mpv mplayer vlc)
-    local webtorrent_arg=""
-    for player in $players; do
-        type "$player" > /dev/null && webtorrent_arg="--$player" && break
+    local webtorrent_args=("$magnet")
+    for player in "${players[@]}"; do
+        type "$player" > /dev/null 2>&1 && webtorrent_args+=("--$player") && break
     done
-    $TERMINAL --hold -e webtorrent "$magnet" "$webtorrent_arg" &
+    "$TERMINAL" --hold -e webtorrent "${webtorrent_args[@]}" &
+}
+
+get_magnet_from_link() {
+    # The a magnet link from the Link field.
+    local link="$1"
+    local magnet
+    magnet="$(curl "$link" -si | grep "Location")"
+    magnet="${magnet##Location: }"
+    printf "%s" "$magnet"
 }
 
 # Defaults
