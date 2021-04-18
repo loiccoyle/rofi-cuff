@@ -62,3 +62,7 @@ Usage:
         -a API_KEY                Jackett API key, will query Jackett if not provided.
         -p PASSWORD               Jackett password.
 ```
+
+# Contributing
+
+Please feel free to open a PR, especially to add common torrent related actions.
