@@ -199,7 +199,7 @@ wait_jackett() {
     # If we started the server, wait until Jackett is responsive. Max of 5s.
     if [ -n "$START" ]; then
         for ((i = 0; i < 10; i++)); do
-            { cuff "${CUFF_ARGS[@]}" config >/dev/null 2>&1 && break; } || sleep 0.5
+            { cuff ${CUFF_ARGS[@]} config >/dev/null 2>&1 && break; } || sleep 0.5
         done
     fi
 }
