@@ -91,7 +91,7 @@ stream() {
             | "${MENU_CMD[@]}" -l "$n_players" -mesg "Set <b>ROFI_CUFF_WEBTORRENT_PLAYER</b> env variable to skip.")" \
             || exit
     fi
-    webtorrent_args=("$magnet" "--$player")
+    webtorrent_args=("$magnet" "--$player" "--playlist")
     # TODO: terminals have different syntaxes for the -e option
     "$TERMINAL" --hold -e webtorrent "${webtorrent_args[@]}" &
 }
