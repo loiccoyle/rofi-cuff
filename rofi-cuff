@@ -238,12 +238,13 @@ Otherwise, %s passes any provided options to the cuff command:\n\n" "$CMD_NAME" 
             # Add a trap on exit to kill jackett service
             { has_jackett && trap stop_jackett EXIT; } || err_msg_exit "Jackett service file not found."
             ;;
-        *)
-            CUFF_ARGS+=(-"$OPTARG")
-            ;;
     esac
 done
-shift $((OPTIND - 1))
+
+# Strip the k and s args from the args passed to the base cuff command
+CUFF_ARGS=("$@")
+CUFF_ARGS=("${CUFF_ARGS[@]/-s/}")
+CUFF_ARGS=("${CUFF_ARGS[@]/-k/}")
 
 # Pipe a cuff search json output straight to rofi-cuff
 # e.g. $ cuff search big buck bunny | rofi-cuff -
