@@ -114,10 +114,10 @@ trackers() {
     local trackers
     local indexers
     IFS=$'\n'
-    indexers="$(cuff "${CUFF_ARGS[@]}" indexers)" || exit
+    indexers="$(cuff ${CUFF_ARGS[@]} indexers)" || exit
     trackers=($(printf "%s" "$indexers" | "${MENU_CMD[@]}" -multi-select -mesg '<b>ESC</b> to clear'))
 
-    [ "${#trackers[@]}" -gt 0 ] && TRACKER_ARGS=($(printf -- "-t %s " "${trackers[@]}")) || TRACKER_ARGS=()
+    [ "${#trackers[@]}" -gt 0 ] && TRACKER_ARGS=("$(printf -- "-t %s " "${trackers[@]}")") || TRACKER_ARGS=()
 }
 
 categories() {
@@ -126,7 +126,7 @@ categories() {
     local categories
     IFS=$'\n'
     categories=($(cuff categories | "${MENU_CMD[@]}" -multi-select -mesg '<b>ESC</b> to clear'))
-    [ "${#categories[@]}" -gt 0 ] && CATEGORY_ARGS=($(printf -- "-c %s " "${categories[@]}")) || CATEGORY_ARGS=()
+    [ "${#categories[@]}" -gt 0 ] && CATEGORY_ARGS=("$(printf -- "-c %s " "${categories[@]}")") || CATEGORY_ARGS=()
 }
 
 search() {
@@ -238,6 +238,7 @@ Otherwise, %s passes any provided options to the cuff command:\n\n" "$CMD_NAME" 
             # Add a trap on exit to kill jackett service
             { has_jackett && trap stop_jackett EXIT; } || err_msg_exit "Jackett service file not found."
             ;;
+        *) ;;
     esac
 done
 
