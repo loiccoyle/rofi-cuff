@@ -140,7 +140,7 @@ search() {
         local query
         query="$("${INPUT_CMD[@]}")" || exit
         results="$(
-            cuff "${CUFF_ARGS[@]}" search -s "Peers" "${TRACKER_ARGS[@]}" "${CATEGORY_ARGS[@]}" "$query"
+            cuff ${CUFF_ARGS[@]} search -s "Peers" ${TRACKER_ARGS[@]} ${CATEGORY_ARGS[@]} "$query"
         )" || exit
     fi
 
