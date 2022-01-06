@@ -156,7 +156,16 @@ search() {
     ))
 
     if [ "${#results_table[@]}" = "0" ]; then
-        rofi -e "No results found for search query: \"$query\""
+        local error_msg
+        if [ -n "$query" ]; then
+            error_msg="No results found for search query: \"$query\""
+        else
+            error_msg="No results found."
+        fi
+        rofi -e "$error_msg"
+        if [ -n "$STDIN" ]; then
+            exit
+        fi
         search
     fi
 
