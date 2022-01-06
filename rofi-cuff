@@ -155,6 +155,11 @@ search() {
             column --table --separator=$'\t'
     ))
 
+    if [ "${#results_table[@]}" = "0" ]; then
+        rofi -e "No results found for search query: \"$query\""
+        search
+    fi
+
     selected_indices="$(
         printf "%s\n" "${results_table[@]}" |
             "${MENU_CMD[@]}" -format 'i' -multi-select -mesg "Shift+Enter: Multiple select"
