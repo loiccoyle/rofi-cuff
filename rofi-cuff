@@ -33,16 +33,9 @@ type webtorrent >/dev/null 2>&1 && ACTIONS+=("stream")
 # Action definitions
 download() {
     # Download the torrent.
-    local magnet
-    magnet="$(printf "%s" "$1" | jq -r ".MagnetUri")"
-    # if there is no magnet link get the magnet link from the link field
-    if [ "$magnet" = "null" ]; then
-        local link
-        link="$(printf "%s" "$1" | jq -r ".Link")"
-        [ "$link" = "null" ] && printf "Could not get magnet link." >&2 && return 1
-        magnet="$(get_magnet_from_link "$link")"
-    fi
-    "$TORRENT_OPENER" "$magnet" &
+    local identifier
+    identifier="$(get_torrent_identifier "$1")"
+    "$TORRENT_OPENER" "$identifier" &
 }
 
 open() {
@@ -59,17 +52,11 @@ open() {
 stream() {
     # Stream the torrent with webtorrent.
     # https://github.com/webtorrent/webtorrent-cli
-    local magnet
+    local identifier
     local player
     declare -a webtorrent_args
-    magnet="$(printf "%s" "$1" | jq -r ".MagnetUri")"
-    # if there is no magnet link get the magnet link from the link field
-    if [ "$magnet" = "null" ]; then
-        local link
-        link="$(printf "%s" "$1" | jq -r ".Link")"
-        [ "$link" = "null" ] && printf "Could not get magnet link." >&2 && return 1
-        magnet="$(get_magnet_from_link "$link")"
-    fi
+
+    identifier="$(get_torrent_identifier "$1")"
     if [ -n "$ROFI_CUFF_WEBTORRENT_PLAYER" ]; then
         player="$ROFI_CUFF_WEBTORRENT_PLAYER"
     else
@@ -91,19 +78,18 @@ stream() {
             "${MENU_CMD[@]}" -l "$n_players" -mesg "Set <b>ROFI_CUFF_WEBTORRENT_PLAYER</b> env variable to skip.")" ||
             exit
     fi
-    webtorrent_args=("$magnet" "--$player" "--playlist")
+    webtorrent_args=("$identifier" "--$player" "--playlist")
     # TODO: terminals have different syntaxes for the -e option
     "$TERMINAL" --hold -e webtorrent "${webtorrent_args[@]}" &
 }
 
-get_magnet_from_link() {
-    # The a magnet link from the Link field.
-    local link
-    local magnet
-    link="$1"
-    magnet="$(curl "$link" -si | grep "Location")"
-    magnet="${magnet##Location: }"
-    printf "%s" "$magnet"
+
+get_torrent_identifier(){
+    # Parse the json to extract the torrent identifier, which could be a magnet link
+    # or the url of a .torrent file.
+    local json_response
+    json_response="$1"
+    printf "%s" "$json_response" | jq -r ".Guid"
 }
 
 SUBMENU=("Search" "Restrict to trackers" "Restrict to categories")
