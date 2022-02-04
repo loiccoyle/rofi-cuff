@@ -89,7 +89,15 @@ get_torrent_identifier(){
     # or the url of a .torrent file.
     local json_response
     json_response="$1"
-    printf "%s" "$json_response" | jq -r ".Guid"
+    local identifier
+    identifier="$(printf "%s" "$json_response" | jq -r ".MagnetUri")"
+    if [ "$identifier" = "null" ]; then
+        local link
+        link="$(printf "%s" "$json_response" | jq -r ".Link")"
+        identifier="$(curl "$link" -si | grep Location)"
+        identifier=${identifier#"Location: "}
+    fi
+    printf "%s" "$identifier"
 }
 
 SUBMENU=("Search" "Restrict to trackers" "Restrict to categories")
