@@ -132,7 +132,7 @@ search() {
     else
         # Prompt for search
         local query
-        query="$("${INPUT_CMD[@]}")" || exit
+        query="$(echo | "${INPUT_CMD[@]}")" || exit
         results="$(
             cuff ${CUFF_ARGS[@]} search -s "Seeders" ${TRACKER_ARGS[@]} ${CATEGORY_ARGS[@]} "$query"
         )" || exit
