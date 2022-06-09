@@ -125,14 +125,15 @@ categories() {
 
 search() {
     # Get search query, create menu and run actions.
+    local query
     local results
+    query="$1"
     if [ -n "$STDIN" ]; then
         # Results from stdin
         results="$(cat)"
     else
         # Prompt for search
-        local query
-        query="$(echo | "${INPUT_CMD[@]}")" || exit
+        [ -z "$query" ] && { query="$(echo | "${INPUT_CMD[@]}")" || exit; }
         results="$(
             cuff ${CUFF_ARGS[@]} search -s "Seeders" ${TRACKER_ARGS[@]} ${CATEGORY_ARGS[@]} "$query"
         )" || exit
@@ -276,7 +277,7 @@ while [ -z "$DONE" ]; do
 
     SELECTION="$(
         printf "%s\n" "${SUBMENU[@]}" |
-            "${MENU_CMD[@]}" -no-custom -l ${#SUBMENU[@]} "${MESG[@]}"
+            "${MENU_CMD[@]}" -l ${#SUBMENU[@]} "${MESG[@]}"
     )" || exit $?
 
     case "$SELECTION" in
@@ -290,6 +291,11 @@ while [ -z "$DONE" ]; do
     "Search")
         wait_jackett
         search
+        DONE=1
+        ;;
+    *)
+        wait_jackett
+        search "$SELECTION"
         DONE=1
         ;;
     esac
