@@ -96,6 +96,7 @@ get_torrent_identifier(){
         link="$(printf "%s" "$json_response" | jq -r ".Link")"
         identifier="$(curl "$link" -si | grep Location)"
         identifier=${identifier#"Location: "}
+        [ -z "$identifier" ] && identifier="$link"
     fi
     printf "%s" "$identifier"
 }
@@ -201,6 +202,7 @@ check_jackett() {
 
 stop_jackett() {
     # Stop the jackett service if it is running.
+    [ -n "$STOP_JACKETT_DELAY" ] && sleep "$STOP_JACKETT_DELAY"
     check_jackett && sudo systemctl stop jackett.service >/dev/null
 }
 
@@ -218,6 +220,7 @@ declare -a TRACKER_ARGS=()
 declare -a CATEGORY_ARGS=()
 STDIN=""
 declare -a CUFF_ARGS=()
+STOP_JACKETT_DELAY=3
 
 # Handle the starting and stopping ourselves as it is more responsive to do it the background now than later
 START=""
