@@ -93,10 +93,23 @@ get_torrent_identifier(){
     identifier="$(printf "%s" "$json_response" | jq -r ".MagnetUri")"
     if [ "$identifier" = "null" ]; then
         local link
+        local temp_file_header
+        temp_file_header="$(mktemp)"
+        local temp_file_torrent
+        temp_file_torrent="$(mktemp --suffix='.torrent')"
         link="$(printf "%s" "$json_response" | jq -r ".Link")"
-        identifier="$(curl "$link" -si | grep Location)"
-        identifier=${identifier#"Location: "}
-        [ -z "$identifier" ] && identifier="$link"
+
+        # fetch the header and maybe the torrent file
+        curl -s "$link" --output "$temp_file_torrent" -D "$temp_file_header"
+
+        if identifier="$(grep Location "$temp_file_header")"; then
+            identifier=${identifier#"Location: "}
+        elif grep -q 'Content-Type: application/x-bittorrent' "$temp_file_header"; then
+            identifier="$temp_file_torrent"
+        else
+            #fallback to the link
+            identifier="$link"
+        fi
     fi
     printf "%s" "$identifier"
 }
@@ -220,7 +233,7 @@ declare -a TRACKER_ARGS=()
 declare -a CATEGORY_ARGS=()
 STDIN=""
 declare -a CUFF_ARGS=()
-STOP_JACKETT_DELAY=3
+STOP_JACKETT_DELAY=""
 
 # Handle the starting and stopping ourselves as it is more responsive to do it the background now than later
 START=""
