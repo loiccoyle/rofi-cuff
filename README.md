@@ -8,6 +8,8 @@
 
 [See it in action](https://imgur.com/7roVMqQ)
 
+**Do you use [`Prowlarr`](https://github.com/prowlarr/prowlarr) instead of `Jackett`? Check out [`prowlet`](https://github.com/loiccoyle/prowlet) / [`rofi-prowlet`](https://github.com/loiccoyle/rofi-prowlet)**
+
 # Installation
 
 ### Dependencies
